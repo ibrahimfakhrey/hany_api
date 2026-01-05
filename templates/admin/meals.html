@@ -1,13 +1,11 @@
 {% extends "admin/base.html" %}
 
-{% block title %}الوجبات - لوحة التحكم{% endblock %}
+{% block title %}الوجبات{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>إدارة الوجبات</h1>
-    <a href="{{ url_for('admin.create_meal_page') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> إضافة وجبة جديدة
-    </a>
+    <h1>🍽️ إدارة الوجبات</h1>
+    <p class="breadcrumb">لوحة التحكم / الوجبات</p>
 </div>
 
 {% if success_message %}
@@ -17,153 +15,63 @@
 {% endif %}
 
 {% if error_message %}
-<div class="alert alert-danger">
+<div class="alert alert-error">
     {{ error_message }}
 </div>
 {% endif %}
 
-<div class="stats-row">
-    <div class="stat-card">
-        <div class="stat-number">{{ total }}</div>
-        <div class="stat-label">إجمالي الوجبات</div>
+<div class="stats-grid">
+    <div class="stat-card total">
+        <div class="icon">🍽️</div>
+        <div class="number">{{ total }}</div>
+        <div class="label">إجمالي الوجبات</div>
     </div>
 </div>
 
 <div class="card">
     <div class="card-header">
-        <h2>قائمة الوجبات</h2>
+        <span class="card-title">قائمة الوجبات</span>
+        <a href="{{ url_for('admin.create_meal_page') }}" class="btn btn-primary">
+            ➕ إضافة وجبة جديدة
+        </a>
     </div>
-    <div class="card-body">
-        {% if meals %}
-        <div class="meals-grid">
-            {% for meal in meals %}
-            <div class="meal-card">
-                {% if meal.image %}
-                <img src="{{ meal.image }}" alt="{{ meal.title }}" class="meal-image">
-                {% else %}
-                <div class="meal-image-placeholder">
-                    <i class="fas fa-utensils"></i>
-                </div>
+
+    {% if meals %}
+    <div class="meals-grid">
+        {% for meal in meals %}
+        <div class="meal-card">
+            {% if meal.image %}
+            <img src="{{ meal.image }}" alt="{{ meal.title }}" class="meal-image">
+            {% else %}
+            <div class="meal-image-placeholder">🍽️</div>
+            {% endif %}
+            <div class="meal-content">
+                <h3>{{ meal.title }}</h3>
+                {% if meal.description %}
+                <p class="meal-description">{{ meal.description }}</p>
                 {% endif %}
-                <div class="meal-content">
-                    <h3>{{ meal.title }}</h3>
-                    {% if meal.description %}
-                    <p class="meal-description">{{ meal.description }}</p>
-                    {% endif %}
-                    {% if meal.link %}
-                    <a href="{{ meal.link }}" target="_blank" class="meal-link">
-                        <i class="fas fa-external-link-alt"></i> رابط الوصفة
-                    </a>
-                    {% endif %}
-                    <div class="meal-date">
-                        <i class="fas fa-clock"></i> {{ meal.created_at[:10] }}
-                    </div>
-                </div>
-                <div class="meal-actions">
-                    <form action="{{ url_for('admin.delete_meal', meal_id=meal.id) }}" method="POST"
-                          onsubmit="return confirm('هل أنت متأكد من حذف هذه الوجبة؟');">
-                        <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash"></i> حذف
-                        </button>
-                    </form>
-                </div>
+                {% if meal.link %}
+                <a href="{{ meal.link }}" target="_blank" class="meal-link">
+                    🔗 رابط الوصفة
+                </a>
+                {% endif %}
+                <div class="meal-date">📅 {{ meal.created_at[:10] }}</div>
             </div>
-            {% endfor %}
+            <div class="meal-actions">
+                <form action="{{ url_for('admin.delete_meal', meal_id=meal.id) }}" method="POST"
+                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الوجبة؟');">
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️ حذف</button>
+                </form>
+            </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-utensils"></i>
-            <p>لا توجد وجبات حتى الآن</p>
-            <a href="{{ url_for('admin.create_meal_page') }}" class="btn btn-primary">إضافة أول وجبة</a>
-        </div>
-        {% endif %}
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">🍽️</div>
+        <p>لا توجد وجبات حتى الآن</p>
+        <a href="{{ url_for('admin.create_meal_page') }}" class="btn btn-primary">إضافة أول وجبة</a>
+    </div>
+    {% endif %}
 </div>
-
-<style>
-.meals-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.meal-card {
-    background: var(--card-bg, #fff);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.meal-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.meal-image-placeholder {
-    width: 100%;
-    height: 200px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 3rem;
-}
-
-.meal-content {
-    padding: 15px;
-}
-
-.meal-content h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.2rem;
-}
-
-.meal-description {
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.meal-link {
-    display: inline-block;
-    color: #e94560;
-    text-decoration: none;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-}
-
-.meal-link:hover {
-    text-decoration: underline;
-}
-
-.meal-date {
-    color: #999;
-    font-size: 0.8rem;
-}
-
-.meal-actions {
-    padding: 10px 15px;
-    border-top: 1px solid rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: flex-end;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 50px;
-    color: #666;
-}
-
-.empty-state i {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    color: #ddd;
-}
-</style>
 {% endblock %}

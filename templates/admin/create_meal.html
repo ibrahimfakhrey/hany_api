@@ -1,13 +1,11 @@
 {% extends "admin/base.html" %}
 
-{% block title %}إضافة وجبة - لوحة التحكم{% endblock %}
+{% block title %}إضافة وجبة{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>إضافة وجبة جديدة</h1>
-    <a href="{{ url_for('admin.meals_list') }}" class="btn btn-secondary">
-        <i class="fas fa-arrow-right"></i> العودة للقائمة
-    </a>
+    <h1>➕ إضافة وجبة جديدة</h1>
+    <p class="breadcrumb">لوحة التحكم / الوجبات / إضافة وجبة</p>
 </div>
 
 {% if success_message %}
@@ -17,99 +15,51 @@
 {% endif %}
 
 {% if error_message %}
-<div class="alert alert-danger">
+<div class="alert alert-error">
     {{ error_message }}
 </div>
 {% endif %}
 
 <div class="card">
     <div class="card-header">
-        <h2>بيانات الوجبة</h2>
+        <span class="card-title">بيانات الوجبة</span>
+        <a href="{{ url_for('admin.meals_list') }}" class="btn btn-outline">
+            ↩️ العودة للقائمة
+        </a>
     </div>
-    <div class="card-body">
-        <form action="{{ url_for('admin.create_meal') }}" method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="title">عنوان الوجبة *</label>
-                <input type="text" id="title" name="title" class="form-control"
-                       placeholder="مثال: سلطة الدجاج المشوي" required>
-            </div>
 
-            <div class="form-group">
-                <label for="description">الوصف</label>
-                <textarea id="description" name="description" class="form-control" rows="4"
-                          placeholder="وصف الوجبة، المكونات، السعرات الحرارية..."></textarea>
-            </div>
+    <form action="{{ url_for('admin.create_meal') }}" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label class="form-label">عنوان الوجبة *</label>
+            <input type="text" name="title" class="form-control" placeholder="مثال: سلطة الدجاج المشوي" required>
+        </div>
 
-            <div class="form-group">
-                <label for="link">رابط الوصفة</label>
-                <input type="url" id="link" name="link" class="form-control"
-                       placeholder="https://...">
-            </div>
+        <div class="form-group">
+            <label class="form-label">الوصف</label>
+            <textarea name="description" class="form-control" placeholder="وصف الوجبة، المكونات، السعرات الحرارية..."></textarea>
+        </div>
 
-            <div class="form-group">
-                <label for="image">صورة الوجبة</label>
-                <input type="file" id="image" name="image" class="form-control"
-                       accept="image/*" onchange="previewImage(this)">
-                <img id="imagePreview" class="image-preview" style="display: none;">
-            </div>
+        <div class="form-group">
+            <label class="form-label">رابط الوصفة</label>
+            <input type="url" name="link" class="form-control" placeholder="https://..." dir="ltr">
+        </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus"></i> إضافة الوجبة
-                </button>
-            </div>
-        </form>
-    </div>
+        <div class="form-group">
+            <label class="form-label">صورة الوجبة</label>
+            <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImage(this)">
+            <img id="imagePreview" style="max-width: 300px; margin-top: 15px; border-radius: 10px; display: none;">
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 15px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                ✅ إضافة الوجبة
+            </button>
+            <a href="{{ url_for('admin.meals_list') }}" class="btn btn-outline">
+                ❌ إلغاء
+            </a>
+        </div>
+    </form>
 </div>
-
-<style>
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #333;
-}
-
-.form-control {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: #e94560;
-}
-
-textarea.form-control {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.image-preview {
-    max-width: 300px;
-    margin-top: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.form-actions {
-    margin-top: 30px;
-    text-align: center;
-}
-
-.btn-lg {
-    padding: 15px 40px;
-    font-size: 1.1rem;
-}
-</style>
 
 <script>
 function previewImage(input) {
