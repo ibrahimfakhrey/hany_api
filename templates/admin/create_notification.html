@@ -1,0 +1,242 @@
+{% extends "admin/base.html" %}
+
+{% block title %}إرسال إشعار{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔔 إرسال إشعار جديد</h1>
+    <div class="breadcrumb">أرسل إشعارات للمستخدمين</div>
+</div>
+
+{% if success_message %}
+<div class="alert alert-success">
+    <span>✅</span>
+    {{ success_message }}
+</div>
+{% endif %}
+
+{% if error_message %}
+<div class="alert alert-error">
+    <span>❌</span>
+    {{ error_message }}
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
+    <!-- Notification Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📝 محتوى الإشعار</h2>
+        </div>
+
+        <form method="POST" action="/admin/notifications/send" enctype="multipart/form-data" id="notificationForm">
+            <div class="form-group">
+                <label class="form-label">نص الإشعار</label>
+                <textarea name="text" class="form-control"
+                    placeholder="اكتب رسالتك هنا... مثال: مرحباً بكم! لا تنسوا شرب الماء 💧"
+                    id="notificationText"></textarea>
+                <small style="color: var(--gray);">يمكنك ترك هذا الحقل فارغاً إذا كنت ترسل صورة فقط</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">رابط صورة (اختياري)</label>
+                <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg"
+                    id="imageUrl">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">أو رفع صورة من جهازك</label>
+                <input type="file" name="image" class="form-control" accept="image/*" id="imageFile">
+            </div>
+
+            <hr style="margin: 25px 0; border: none; border-top: 2px solid var(--gray-light);">
+
+            <div class="form-group">
+                <label class="form-label">🎯 المستهدفون</label>
+
+                <div class="radio-group">
+                    <label class="radio-option" id="optionAll">
+                        <input type="radio" name="target_type" value="all" {% if not preset_target or
+                            preset_target=='all' %}checked{% endif %} onchange="updateTargetUI()">
+                        <span class="radio-icon">👥</span>
+                        <div class="radio-text">
+                            <strong>جميع المستخدمين</strong>
+                            <span>سيصل لـ {{ total_users }} مستخدم</span>
+                        </div>
+                    </label>
+
+                    <label class="radio-option" id="optionPaid">
+                        <input type="radio" name="target_type" value="paid" {% if preset_target=='paid' %}checked{%
+                            endif %} onchange="updateTargetUI()">
+                        <span class="radio-icon">💎</span>
+                        <div class="radio-text">
+                            <strong>المشتركون فقط</strong>
+                            <span>سيصل لـ {{ paid_users }} مشترك مدفوع</span>
+                        </div>
+                    </label>
+
+                    <label class="radio-option" id="optionSpecific">
+                        <input type="radio" name="target_type" value="specific" {% if preset_user_id %}checked{% endif
+                            %} onchange="updateTargetUI()">
+                        <span class="radio-icon">👤</span>
+                        <div class="radio-text">
+                            <strong>مستخدم محدد</strong>
+                            <span>إرسال لمستخدم واحد فقط</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- User Selection (for specific target) -->
+            <div class="user-select-container {% if preset_user_id %}active{% endif %}" id="userSelectContainer">
+                <div class="form-group">
+                    <label class="form-label">اختر المستخدم</label>
+
+                    {% if preset_user_id %}
+                    <div
+                        style="background: var(--gray-light); padding: 15px; border-radius: 10px; display: flex; align-items: center; gap: 12px;">
+                        <div class="user-avatar">{{ preset_user_name[0] }}</div>
+                        <div>
+                            <strong>{{ preset_user_name }}</strong>
+                            <input type="hidden" name="target_user_id" value="{{ preset_user_id }}">
+                        </div>
+                        <a href="/admin/notifications/new" style="margin-right: auto; color: var(--red-accent);">✕
+                            تغيير</a>
+                    </div>
+                    {% else %}
+                    <select name="target_user_id" class="form-control" id="userSelect">
+                        <option value="">-- اختر مستخدم --</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.name }} ({{ user.phone }}) {% if user.is_paid %}💎{% endif
+                            %}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 16px;">
+                🚀 إرسال الإشعار
+            </button>
+        </form>
+    </div>
+
+    <!-- Preview & Info -->
+    <div>
+        <!-- Preview Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">👁️ معاينة</h2>
+            </div>
+
+            <div
+                style="background: linear-gradient(135deg, var(--dark-teal), var(--deep-green)); border-radius: 12px; padding: 15px; color: white;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div
+                        style="width: 35px; height: 35px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        🏋️</div>
+                    <div>
+                        <strong>كوتش هاني الليثي</strong>
+                        <div style="font-size: 12px; opacity: 0.8;">الآن</div>
+                    </div>
+                </div>
+                <p id="previewText" style="font-size: 14px;">نص الإشعار سيظهر هنا...</p>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">📊 إحصائيات سريعة</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div
+                    style="display: flex; justify-content: space-between; padding: 10px; background: var(--gray-light); border-radius: 8px;">
+                    <span>إجمالي المستخدمين</span>
+                    <strong>{{ total_users }}</strong>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; padding: 10px; background: var(--gray-light); border-radius: 8px;">
+                    <span>المشتركون 💎</span>
+                    <strong>{{ paid_users }}</strong>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; padding: 10px; background: var(--gray-light); border-radius: 8px;">
+                    <span>غير المشتركين</span>
+                    <strong>{{ unpaid_users }}</strong>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; padding: 10px; background: var(--gray-light); border-radius: 8px;">
+                    <span>لديهم FCM Token</span>
+                    <strong>{{ users_with_token }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card" style="background: linear-gradient(135deg, var(--gold-accent), #9a7d4a); color: white;">
+            <h3 style="margin-bottom: 15px;">💡 نصائح</h3>
+            <ul style="padding-right: 20px; line-height: 1.8;">
+                <li>استخدم الإيموجي لجذب الانتباه 🔔</li>
+                <li>اجعل النص قصيراً ومفيداً</li>
+                <li>أرسل في أوقات نشاط المستخدمين</li>
+                <li>لا تكثر من الإشعارات</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateTargetUI() {
+        const specific = document.querySelector('input[value="specific"]');
+        const container = document.getElementById('userSelectContainer');
+
+        if (specific && specific.checked) {
+            container.classList.add('active');
+        } else {
+            container.classList.remove('active');
+        }
+    }
+
+    // Live preview
+    const textInput = document.getElementById('notificationText');
+    const previewText = document.getElementById('previewText');
+
+    if (textInput && previewText) {
+        textInput.addEventListener('input', function () {
+            previewText.textContent = this.value || 'نص الإشعار سيظهر هنا...';
+        });
+    }
+
+    // Form validation
+    document.getElementById('notificationForm').addEventListener('submit', function (e) {
+        const text = document.getElementById('notificationText').value.trim();
+        const imageUrl = document.getElementById('imageUrl').value.trim();
+        const imageFile = document.getElementById('imageFile').files.length > 0;
+
+        if (!text && !imageUrl && !imageFile) {
+            e.preventDefault();
+            alert('يجب إدخال نص أو صورة على الأقل!');
+            return false;
+        }
+
+        const specific = document.querySelector('input[value="specific"]');
+        if (specific && specific.checked) {
+            const userSelect = document.getElementById('userSelect');
+            if (userSelect && !userSelect.value) {
+                e.preventDefault();
+                alert('يجب اختيار مستخدم!');
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    // Initialize
+    updateTargetUI();
+</script>
+{% endblock %}

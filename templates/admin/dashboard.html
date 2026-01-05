@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+
+{% block title %}الرئيسية{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>مرحباً، كوتش هاني 👋</h1>
+    <div class="breadcrumb">{{ current_date }}</div>
+</div>
+
+{% if success_message %}
+<div class="alert alert-success">
+    <span>✅</span>
+    {{ success_message }}
+</div>
+{% endif %}
+
+{% if error_message %}
+<div class="alert alert-error">
+    <span>❌</span>
+    {{ error_message }}
+</div>
+{% endif %}
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card total">
+        <div class="icon">👥</div>
+        <div class="number">{{ total_users }}</div>
+        <div class="label">إجمالي المستخدمين</div>
+    </div>
+
+    <div class="stat-card paid">
+        <div class="icon">💎</div>
+        <div class="number">{{ paid_users }}</div>
+        <div class="label">المشتركون</div>
+    </div>
+
+    <div class="stat-card unpaid">
+        <div class="icon">👤</div>
+        <div class="number">{{ unpaid_users }}</div>
+        <div class="label">غير المشتركين</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">⚡ إجراءات سريعة</h2>
+    </div>
+
+    <div class="quick-actions">
+        <a href="/admin/notifications/new" class="quick-action-card">
+            <div class="icon">🔔</div>
+            <h3>إرسال إشعار</h3>
+        </a>
+
+        <a href="/admin/users" class="quick-action-card">
+            <div class="icon">👥</div>
+            <h3>عرض المستخدمين</h3>
+        </a>
+
+        <a href="/admin/notifications/new?target=paid" class="quick-action-card"
+            style="background: linear-gradient(135deg, var(--gold-accent), #9a7d4a);">
+            <div class="icon">💎</div>
+            <h3>إشعار للمشتركين</h3>
+        </a>
+
+        <a href="/admin/paid-users" class="quick-action-card"
+            style="background: linear-gradient(135deg, var(--primary-teal), var(--dark-teal));">
+            <div class="icon">📊</div>
+            <h3>إدارة الاشتراكات</h3>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Users -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">👥 أحدث المستخدمين</h2>
+        <a href="/admin/users" class="btn btn-outline btn-sm">عرض الكل →</a>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>المستخدم</th>
+                <th>حالة الاشتراك</th>
+                <th>تاريخ التسجيل</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in recent_users %}
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <div class="user-avatar">{{ user.name[0] }}</div>
+                        <div class="user-details">
+                            <div class="name">{{ user.name }}</div>
+                            <div class="phone">{{ user.phone }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if user.is_paid %}
+                    <span class="badge badge-gold">💎 مشترك</span>
+                    {% else %}
+                    <span class="badge badge-warning">👤 غير مشترك</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at[:10] }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="/admin/users/{{ user.id }}" class="btn btn-outline btn-sm">👁️ عرض</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

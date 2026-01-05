@@ -1,0 +1,158 @@
+{% extends "admin/base.html" %}
+
+{% block title %}تفاصيل {{ user.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👤 تفاصيل المستخدم</h1>
+    <div class="breadcrumb">
+        <a href="/admin/users" style="color: var(--primary-teal); text-decoration: none;">المستخدمون</a> / {{ user.name
+        }}
+    </div>
+</div>
+
+{% if success_message %}
+<div class="alert alert-success">
+    <span>✅</span>
+    {{ success_message }}
+</div>
+{% endif %}
+
+{% if error_message %}
+<div class="alert alert-error">
+    <span>❌</span>
+    {{ error_message }}
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px;">
+    <!-- User Profile Card -->
+    <div class="card" style="text-align: center;">
+        <div
+            style="width: 100px; height: 100px; background: {% if user.is_paid %}var(--gold-accent){% else %}var(--primary-teal){% endif %}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; color: white; font-weight: bold;">
+            {{ user.name[0] }}
+        </div>
+
+        <h2 style="color: var(--dark-teal); margin-bottom: 5px;">{{ user.name }}</h2>
+        <p style="color: var(--gray); direction: ltr; margin-bottom: 20px;">{{ user.phone }}</p>
+
+        {% if user.is_paid %}
+        <div
+            style="background: linear-gradient(135deg, var(--gold-accent), #9a7d4a); color: white; padding: 12px 25px; border-radius: 25px; display: inline-block; font-weight: bold;">
+            💎 مشترك
+        </div>
+        {% else %}
+        <div
+            style="background: var(--gray-light); color: var(--gray); padding: 12px 25px; border-radius: 25px; display: inline-block; font-weight: bold;">
+            👤 غير مشترك
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span style="color: var(--gray);">📅 تاريخ التسجيل</span>
+                <span style="font-weight: 600;">{{ user.created_at[:10] }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span style="color: var(--gray);">🆔 رقم المستخدم</span>
+                <span style="font-weight: 600;">#{{ user.id }}</span>
+            </div>
+            {% if user.fcm_token %}
+            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span style="color: var(--gray);">📱 الإشعارات</span>
+                <span class="badge badge-success">مفعّلة</span>
+            </div>
+            {% else %}
+            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span style="color: var(--gray);">📱 الإشعارات</span>
+                <span class="badge badge-warning">غير مفعّلة</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions Card -->
+    <div>
+        <!-- Change Subscription Status -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">💳 إدارة الاشتراك</h2>
+            </div>
+
+            <p style="color: var(--gray); margin-bottom: 20px;">
+                الحالة الحالية:
+                {% if user.is_paid %}
+                <strong style="color: var(--gold-accent);">مشترك ✅</strong>
+                {% else %}
+                <strong style="color: var(--gray);">غير مشترك ❌</strong>
+                {% endif %}
+            </p>
+
+            {% if user.is_paid %}
+            <form method="POST" action="/admin/users/{{ user.id }}/unpaid">
+                <button type="submit" class="btn" style="background: var(--orange); color: white; width: 100%;"
+                    onclick="return confirm('هل تريد إلغاء اشتراك {{ user.name }}؟')">
+                    ❌ إلغاء الاشتراك (تحويل لغير مشترك)
+                </button>
+            </form>
+            {% else %}
+            <form method="POST" action="/admin/users/{{ user.id }}/paid">
+                <button type="submit" class="btn btn-gold" style="width: 100%;"
+                    onclick="return confirm('هل تريد تفعيل اشتراك {{ user.name }}؟')">
+                    ✅ تفعيل الاشتراك (تحويل لمشترك)
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Send Notification -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">🔔 إرسال إشعار خاص</h2>
+            </div>
+
+            <form method="POST" action="/admin/notifications/send">
+                <input type="hidden" name="target_type" value="specific">
+                <input type="hidden" name="target_user_id" value="{{ user.id }}">
+
+                <div class="form-group">
+                    <label class="form-label">نص الإشعار</label>
+                    <textarea name="text" class="form-control" placeholder="اكتب رسالتك لـ {{ user.name }}..."
+                        required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">رابط صورة (اختياري)</label>
+                    <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    🚀 إرسال الإشعار لـ {{ user.name }}
+                </button>
+            </form>
+        </div>
+
+        <!-- Delete User -->
+        <div class="card" style="border: 2px solid var(--red-accent);">
+            <div class="card-header">
+                <h2 class="card-title" style="color: var(--red-accent);">🗑️ حذف المستخدم</h2>
+            </div>
+
+            <p style="color: var(--gray); margin-bottom: 20px;">
+                ⚠️ تحذير: حذف المستخدم نهائي ولا يمكن التراجع عنه!
+            </p>
+
+            <form method="POST" action="/admin/users/{{ user.id }}/delete">
+                <button type="submit" class="btn btn-danger" style="width: 100%;"
+                    onclick="return confirm('⚠️ هل أنت متأكد من حذف {{ user.name }}؟\n\nهذا الإجراء نهائي ولا يمكن التراجع عنه!')">
+                    🗑️ حذف المستخدم نهائياً
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="/admin/users" class="btn btn-outline">← العودة للمستخدمين</a>
+</div>
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends "admin/base.html" %}
+
+{% block title %}إدارة الاشتراكات السريعة{% endblock %}
+
+{% block content %}
+<style>
+    .quick-manage-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .user-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--white);
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .user-row.paid {
+        border-right: 4px solid var(--gold-accent);
+        background: #fffdf5;
+    }
+
+    .user-row.unpaid {
+        border-right: 4px solid var(--gray);
+    }
+
+    .user-info-compact {
+        flex: 1;
+    }
+
+    .user-info-compact .name {
+        font-weight: 700;
+        color: var(--dark-teal);
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+
+    .user-info-compact .phone {
+        color: var(--gray);
+        font-size: 14px;
+        direction: ltr;
+        display: inline-block;
+    }
+
+    .toggle-btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        min-width: 100px;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-btn.make-paid {
+        background: linear-gradient(135deg, var(--gold-accent), #9a7d4a);
+        color: white;
+    }
+
+    .toggle-btn.make-paid:hover {
+        transform: scale(1.05);
+    }
+
+    .toggle-btn.make-unpaid {
+        background: #f0f0f0;
+        color: var(--gray);
+    }
+
+    .toggle-btn.make-unpaid:hover {
+        background: #e0e0e0;
+    }
+
+    .toggle-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .toggle-btn .spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .toggle-btn.loading .spinner {
+        display: inline-block;
+    }
+
+    .toggle-btn.loading .btn-text {
+        display: none;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 10px 20px;
+        background: var(--white);
+        border: 2px solid var(--gray-light);
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--gray);
+        transition: all 0.3s ease;
+    }
+
+    .filter-tab.active {
+        background: var(--primary-teal);
+        color: white;
+        border-color: var(--primary-teal);
+    }
+
+    .filter-tab:hover:not(.active) {
+        border-color: var(--primary-teal);
+        color: var(--primary-teal);
+    }
+
+    .success-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #27ae60;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        opacity: 0;
+        transition: all 0.4s ease;
+        z-index: 9999;
+    }
+
+    .success-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--gray);
+    }
+
+    .empty-state .icon {
+        font-size: 60px;
+        margin-bottom: 15px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .quick-manage-container {
+            padding: 0 10px;
+        }
+
+        .user-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            padding: 15px;
+        }
+
+        .toggle-btn {
+            width: 100%;
+            padding: 14px;
+        }
+
+        .filter-tabs {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1>⚡ إدارة الاشتراكات السريعة</h1>
+    <div class="breadcrumb">اضغط على الزر لتغيير حالة الاشتراك فوراً</div>
+</div>
+
+<div class="quick-manage-container">
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <a href="/admin/quick-manage?filter=all" class="filter-tab {% if filter == 'all' %}active{% endif %}">
+            الكل ({{ total }})
+        </a>
+        <a href="/admin/quick-manage?filter=unpaid" class="filter-tab {% if filter == 'unpaid' %}active{% endif %}">
+            👤 غير مشتركين ({{ unpaid_count }})
+        </a>
+        <a href="/admin/quick-manage?filter=paid" class="filter-tab {% if filter == 'paid' %}active{% endif %}">
+            💎 مشتركون ({{ paid_count }})
+        </a>
+    </div>
+
+    <!-- Users List -->
+    {% if users %}
+    {% for user in users %}
+    <div class="user-row {% if user.is_paid %}paid{% else %}unpaid{% endif %}" id="user-{{ user.id }}">
+        <div class="user-info-compact">
+            <div class="name">{{ user.name }}</div>
+            <div class="phone">{{ user.phone }}</div>
+        </div>
+
+        {% if user.is_paid %}
+        <button class="toggle-btn make-unpaid" onclick="toggleStatus({{ user.id }}, false, this)">
+            <span class="btn-text">❌ إلغاء</span>
+            <span class="spinner"></span>
+        </button>
+        {% else %}
+        <button class="toggle-btn make-paid" onclick="toggleStatus({{ user.id }}, true, this)">
+            <span class="btn-text">✅ تفعيل</span>
+            <span class="spinner"></span>
+        </button>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">👥</div>
+        <p>لا يوجد مستخدمون</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Success Toast -->
+<div class="success-toast" id="toast"></div>
+
+<script>
+    function toggleStatus(userId, makePaid, button) {
+        // Disable button and show loading
+        button.disabled = true;
+        button.classList.add('loading');
+
+        const endpoint = makePaid
+            ? `/admin/api/users/${userId}/paid`
+            : `/admin/api/users/${userId}/unpaid`;
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success toast
+                    showToast(data.message);
+
+                    // Update the row
+                    const row = document.getElementById(`user-${userId}`);
+
+                    if (makePaid) {
+                        row.classList.remove('unpaid');
+                        row.classList.add('paid');
+                        button.className = 'toggle-btn make-unpaid';
+                        button.innerHTML = '<span class="btn-text">❌ إلغاء</span><span class="spinner"></span>';
+                        button.onclick = function () { toggleStatus(userId, false, this); };
+                    } else {
+                        row.classList.remove('paid');
+                        row.classList.add('unpaid');
+                        button.className = 'toggle-btn make-paid';
+                        button.innerHTML = '<span class="btn-text">✅ تفعيل</span><span class="spinner"></span>';
+                        button.onclick = function () { toggleStatus(userId, true, this); };
+                    }
+                } else {
+                    showToast('حدث خطأ: ' + data.error, true);
+                }
+            })
+            .catch(error => {
+                showToast('خطأ في الاتصال', true);
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.classList.remove('loading');
+            });
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.style.background = isError ? '#e74c3c' : '#27ae60';
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+</script>
+{% endblock %}

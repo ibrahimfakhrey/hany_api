@@ -1,0 +1,125 @@
+{% extends "admin/base.html" %}
+
+{% block title %}المستخدمون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👥 قائمة المستخدمين</h1>
+    <div class="breadcrumb">إجمالي {{ total }} مستخدم</div>
+</div>
+
+{% if success_message %}
+<div class="alert alert-success">
+    <span>✅</span>
+    {{ success_message }}
+</div>
+{% endif %}
+
+{% if error_message %}
+<div class="alert alert-error">
+    <span>❌</span>
+    {{ error_message }}
+</div>
+{% endif %}
+
+<!-- Search & Filters -->
+<div class="card">
+    <form method="GET" action="/admin/users">
+        <div class="search-box">
+            <input type="text" name="phone" class="form-control" placeholder="🔍 ابحث برقم الهاتف..."
+                value="{{ search_phone or '' }}">
+            <button type="submit" class="btn btn-primary">بحث</button>
+            {% if search_phone %}
+            <a href="/admin/users" class="btn btn-outline">إلغاء البحث</a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <a href="/admin/users"
+            class="btn {% if not filter_type %}btn-primary{% else %}btn-outline{% endif %} btn-sm">الكل ({{ total
+            }})</a>
+        <a href="/admin/paid-users"
+            class="btn {% if filter_type == 'paid' %}btn-gold{% else %}btn-outline{% endif %} btn-sm">💎 المشتركون ({{
+            paid_count }})</a>
+        <a href="/admin/unpaid-users"
+            class="btn {% if filter_type == 'unpaid' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">👤 غير
+            مشتركين ({{ unpaid_count }})</a>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">المستخدمون {% if filter_type == 'paid' %}المشتركون{% elif filter_type == 'unpaid' %}غير
+            المشتركين{% endif %}</h2>
+        <a href="/admin/notifications/new" class="btn btn-primary btn-sm">🔔 إرسال إشعار</a>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>المستخدم</th>
+                <th>حالة الاشتراك</th>
+                <th>تاريخ التسجيل</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>
+                    <div class="user-info">
+                        <div class="user-avatar"
+                            style="background: {% if user.is_paid %}var(--gold-accent){% else %}var(--primary-teal){% endif %};">
+                            {{ user.name[0] }}</div>
+                        <div class="user-details">
+                            <div class="name">{{ user.name }}</div>
+                            <div class="phone">{{ user.phone }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if user.is_paid %}
+                    <span class="badge badge-gold">💎 مشترك</span>
+                    {% else %}
+                    <span class="badge badge-warning">👤 غير مشترك</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at[:10] }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="/admin/users/{{ user.id }}" class="btn btn-outline btn-sm">👁️ عرض</a>
+                        {% if user.is_paid %}
+                        <form method="POST" action="/admin/users/{{ user.id }}/unpaid" style="display: inline;">
+                            <button type="submit" class="btn btn-sm" style="background: var(--orange); color: white;"
+                                onclick="return confirm('هل تريد إلغاء اشتراك {{ user.name }}؟')">❌ إلغاء
+                                اشتراك</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="/admin/users/{{ user.id }}/paid" style="display: inline;">
+                            <button type="submit" class="btn btn-gold btn-sm"
+                                onclick="return confirm('هل تريد تفعيل اشتراك {{ user.name }}؟')">✅ تفعيل</button>
+                        </form>
+                        {% endif %}
+                        <a href="/admin/notifications/new?user_id={{ user.id }}&user_name={{ user.name }}"
+                            class="btn btn-primary btn-sm">🔔</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+
+            {% if not users %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: var(--gray);">
+                    <div style="font-size: 50px; margin-bottom: 15px;">👤</div>
+                    <p>لا يوجد مستخدمون {% if search_phone %}يطابقون البحث{% endif %}</p>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

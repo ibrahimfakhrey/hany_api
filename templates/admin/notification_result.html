@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تم إرسال الإشعار - كوتش هاني الليثي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-teal: #39d6cc;
+            --light-mint: #85f4d8;
+            --dark-teal: #166d68;
+            --gold-accent: #b4945c;
+            --deep-green: #345c54;
+            --red-accent: #e74c3c;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, var(--dark-teal), var(--deep-green));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            direction: rtl;
+            padding: 20px;
+        }
+
+        .result-container {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 80px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: var(--dark-teal);
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .target-info {
+            color: var(--gold-accent);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px 15px;
+        }
+
+        .stat-box .number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark-teal);
+        }
+
+        .stat-box .label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .stat-box.success .number {
+            color: #27ae60;
+        }
+
+        .stat-box.failure .number {
+            color: var(--red-accent);
+        }
+
+        .stat-box.total .number {
+            color: var(--gold-accent);
+        }
+
+        .notification-preview {
+            background: linear-gradient(135deg, var(--dark-teal), var(--deep-green));
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            text-align: right;
+            margin-bottom: 30px;
+        }
+
+        .notification-preview .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .notification-preview .app-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .notification-preview .app-name {
+            font-weight: 600;
+        }
+
+        .notification-preview .body {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-family: 'Cairo', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: var(--primary-teal);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-teal);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-teal);
+            color: var(--primary-teal);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-teal);
+            color: white;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="result-container">
+        {% if success %}
+        <div class="result-icon">✅</div>
+        <h1>تم إرسال الإشعار بنجاح!</h1>
+        {% else %}
+        <div class="result-icon">❌</div>
+        <h1>حدث خطأ في الإرسال</h1>
+        {% endif %}
+
+        <div class="target-info">
+            {% if target_type == 'all' %}
+            🎯 تم الإرسال لجميع المستخدمين
+            {% elif target_type == 'paid' %}
+            🎯 تم الإرسال للمشتركين فقط
+            {% else %}
+            🎯 تم الإرسال لمستخدم محدد
+            {% endif %}
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box success">
+                <div class="number">{{ push_result.success }}</div>
+                <div class="label">✅ نجح</div>
+            </div>
+            <div class="stat-box failure">
+                <div class="number">{{ push_result.failure }}</div>
+                <div class="label">❌ فشل</div>
+            </div>
+            <div class="stat-box total">
+                <div class="number">{{ push_result.total }}</div>
+                <div class="label">📊 الإجمالي</div>
+            </div>
+        </div>
+
+        <!-- Notification Preview -->
+        {% if notification_text %}
+        <div class="notification-preview">
+            <div class="header">
+                <div class="app-icon">🏋️</div>
+                <div class="app-name">كوتش هاني الليثي</div>
+            </div>
+            <div class="body">{{ notification_text }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="actions">
+            <a href="/admin/notifications/new" class="btn btn-primary">
+                🔔 إرسال إشعار آخر
+            </a>
+            <a href="/admin" class="btn btn-outline">
+                🏠 العودة للرئيسية
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>
