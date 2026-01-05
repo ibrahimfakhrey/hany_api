@@ -47,6 +47,13 @@
             {% endif %}
             <div class="meal-content">
                 <h3>{{ meal.title }}</h3>
+                <span class="meal-category-badge category-{{ meal.category }}">
+                    {% if meal.category == 'breakfast' %}فطور
+                    {% elif meal.category == 'lunch' %}غداء
+                    {% elif meal.category == 'dinner' %}عشاء
+                    {% elif meal.category == 'snacks' %}سناكس
+                    {% else %}{{ meal.category }}{% endif %}
+                </span>
                 {% if meal.description %}
                 <p class="meal-description">{{ meal.description }}</p>
                 {% endif %}

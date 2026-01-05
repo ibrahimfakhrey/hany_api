@@ -21,8 +21,15 @@ def get_all_meals():
     """
     Get all meals
     Returns all meals ordered by creation date (newest first)
+    Optional query param: ?category=breakfast|lunch|dinner|snacks
     """
-    meals = Meal.query.order_by(Meal.created_at.desc()).all()
+    category = request.args.get('category')
+
+    if category:
+        meals = Meal.query.filter_by(category=category).order_by(Meal.created_at.desc()).all()
+    else:
+        meals = Meal.query.order_by(Meal.created_at.desc()).all()
+
     base_url = request.host_url.rstrip('/')
 
     return jsonify({
@@ -68,12 +75,14 @@ def create_meal():
         title = request.form.get('title')
         description = request.form.get('description')
         link = request.form.get('link')
+        category = request.form.get('category', 'breakfast')
         image_file = request.files.get('image')
     else:
         data = request.get_json() or {}
         title = data.get('title')
         description = data.get('description')
         link = data.get('link')
+        category = data.get('category', 'breakfast')
         image_file = None
 
     # Validate required fields
@@ -100,7 +109,8 @@ def create_meal():
         title=title,
         description=description,
         image_path=image_path,
-        link=link
+        link=link,
+        category=category
     )
 
     db.session.add(meal)

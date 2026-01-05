@@ -120,3 +120,41 @@ def save_device_token():
         'message': 'Device token saved successfully'
     }), 200
 
+
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    """
+    Get current user profile including subscription status.
+
+    Headers required:
+        Authorization: Bearer <jwt_token>
+
+    Returns:
+        200: { "user": { "id", "name", "phone", "is_paid" } }
+        401: { "error": "Token is missing or invalid" }
+        404: { "error": "User not found" }
+    """
+    try:
+        # Get user ID from JWT token
+        current_user_id = int(get_jwt_identity())
+
+        # Fetch user from database
+        user = User.query.get(current_user_id)
+
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Return user data
+        return jsonify({
+            'user': {
+                'id': user.id,
+                'name': user.name,
+                'phone': user.phone,
+                'is_paid': user.is_paid
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+

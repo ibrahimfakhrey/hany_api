@@ -439,6 +439,7 @@ def create_meal():
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
     link = request.form.get('link', '').strip()
+    category = request.form.get('category', 'breakfast')
     image_file = request.files.get('image')
 
     # Validate required fields
@@ -462,7 +463,8 @@ def create_meal():
         title=title,
         description=description if description else None,
         image_path=image_path,
-        link=link if link else None
+        link=link if link else None,
+        category=category
     )
 
     db.session.add(meal)

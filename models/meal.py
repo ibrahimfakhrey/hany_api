@@ -12,6 +12,7 @@ class Meal(db.Model):
     description = db.Column(db.Text, nullable=True)
     image_path = db.Column(db.String(500), nullable=True)  # Uploaded image
     link = db.Column(db.String(500), nullable=True)  # External link (e.g., recipe URL)
+    category = db.Column(db.String(20), nullable=False, default='breakfast')  # breakfast, lunch, dinner, snacks
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self, base_url=''):
@@ -21,6 +22,7 @@ class Meal(db.Model):
             'title': self.title,
             'description': self.description,
             'link': self.link,
+            'category': self.category,
             'created_at': self.created_at.isoformat()
         }
 
