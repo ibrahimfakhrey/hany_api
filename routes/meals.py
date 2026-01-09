@@ -3,6 +3,7 @@ import time
 from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_jwt_extended import jwt_required, get_jwt
 from werkzeug.utils import secure_filename
+from sqlalchemy import or_, and_
 from models import db
 from models.meal import Meal
 from config import Config
@@ -120,6 +121,49 @@ def create_meal():
         'message': 'Meal created successfully',
         'meal': meal.to_dict(request.host_url.rstrip('/'))
     }), 201
+
+
+@meals_bp.route('/search', methods=['GET'])
+def search_meals():
+    """
+    Search meals by ingredient/keyword
+
+    Query params:
+    - query: The search term (ingredient name, e.g., "فول")
+    - category: Optional filter by category (breakfast, lunch, dinner, snacks)
+
+    Returns all meals where title or description contains the search term
+    """
+    query = request.args.get('query', '').strip()
+    category = request.args.get('category')
+
+    if not query:
+        return jsonify({'error': 'Search query is required'}), 400
+
+    # Build the search query - search in title and description
+    search_filter = or_(
+        Meal.title.ilike(f'%{query}%'),
+        Meal.description.ilike(f'%{query}%')
+    )
+
+    if category:
+        meals = Meal.query.filter(
+            and_(
+                Meal.category == category,
+                search_filter
+            )
+        ).order_by(Meal.created_at.desc()).all()
+    else:
+        meals = Meal.query.filter(search_filter).order_by(Meal.created_at.desc()).all()
+
+    base_url = request.host_url.rstrip('/')
+
+    return jsonify({
+        'meals': [meal.to_dict(base_url) for meal in meals],
+        'total': len(meals),
+        'query': query,
+        'category': category
+    }), 200
 
 
 @meals_bp.route('/<int:meal_id>', methods=['DELETE'])
